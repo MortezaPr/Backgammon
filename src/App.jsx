@@ -32,21 +32,36 @@ function App() {
   }
 
   function calculateAvailableMoves() {
+    let dest1;
+    let dest2; 
+    let dest3; 
     const from = player.selectedBars[0];
-    let dest1 = from - dice[0];
-    let dest2 = from - dice[1];
-    let dest3 = from - (dice[0] + dice[1]);
-    if (turn == 1) {
-      if (dest1 < 0) dest1 = 11 - dest1;
+    // top row
+    if ((from <= 11 && turn == 1) || (from >= 12 && turn == -1)) {
+      dest1 = from - dice[0];
+      dest2 = from - dice[1];
+      dest3 = from - (dice[0] + dice[1]);
 
-      if (dest2 < 0) dest2 = 11 - dest2;
+    }// bottom row
+     else {
+      dest1 = from + dice[0];
+      dest2 = from + dice[1];
+      dest3 = from + (dice[0] + dice[1]);
+    }
 
-      if (dest3 < 0) dest3 = 11 - dest3;
-    } else {
+    
+    // move from bottom to top or top to bottom
+    if (from <= 11 && turn == 1) {
+        if (dest1 < 0) dest1 = 11 - dest1;
+      
+        if (dest2 < 0) dest2 = 11 - dest2;
+        
+        if (dest3 < 0) dest3 = 11 - dest3;
+    } else if (from >= 12 && turn == -1) {
       if (dest1 < 12) dest1 = 11 - dest1;
-
+      
       if (dest2 < 12) dest2 = 11 - dest2;
-
+      
       if (dest3 < 12) dest3 = 11 - dest3;
     }
 
@@ -95,7 +110,13 @@ function App() {
 
       // update dice
       let d = [...dice];
-      const diceNum = from - to;
+      let diceNum = from - to;
+      if (diceNum < 0) {
+        diceNum = -(diceNum + 11)
+        
+      } else if (diceNum > 6) {
+        diceNum = 11 - diceNum;
+      }
       const din = d.indexOf(diceNum);
       if (din > -1) {
         d.splice(index, 1);
