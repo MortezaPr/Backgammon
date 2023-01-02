@@ -26,3 +26,7 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
+.dice {
+  padding: 10px;
+}
