@@ -32,37 +32,44 @@ function App() {
   }
 
   function calculateAvailableMoves() {
-    let dest1;
-    let dest2; 
-    let dest3; 
     const from = player.selectedBars[0];
-    // top row
-    if ((from <= 11 && turn == 1) || (from >= 12 && turn == -1)) {
+    let dest1;
+    let dest2;
+    let dest3;
+
+    if ((from <= 11 && turn == 1) || (from > 11 && turn == -1)) {
       dest1 = from - dice[0];
       dest2 = from - dice[1];
       dest3 = from - (dice[0] + dice[1]);
+      // change row for white
+      if (turn == 1) {
+        if (dest1 < 0) {
+          dest1 = -dest1 + 11;
+        }
+        if (dest2 < 0) {
+          dest2 = -dest2 + 11;
+        }
+        if (dest3 < 0) {
+          dest3 = -dest3 + 11;
+        }
+      } // change row for black
+      else {
+        if (dest1 < 12) {
+          dest1 = 11 - dest1;
+        }
 
-    }// bottom row
-     else {
+        if (dest2 < 12) {
+          dest2 = 11 - dest2;
+        }
+
+        if (dest3 < 12) {
+          dest3 = 11 - dest3;
+        }
+      }
+    } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
       dest1 = from + dice[0];
       dest2 = from + dice[1];
       dest3 = from + (dice[0] + dice[1]);
-    }
-
-    
-    // move from bottom to top or top to bottom
-    if (from <= 11 && turn == 1) {
-        if (dest1 < 0) dest1 = 11 - dest1;
-      
-        if (dest2 < 0) dest2 = 11 - dest2;
-        
-        if (dest3 < 0) dest3 = 11 - dest3;
-    } else if (from >= 12 && turn == -1) {
-      if (dest1 < 12) dest1 = 11 - dest1;
-      
-      if (dest2 < 12) dest2 = 11 - dest2;
-      
-      if (dest3 < 12) dest3 = 11 - dest3;
     }
 
     const destinations = [dest1, dest2, dest3];
@@ -88,6 +95,7 @@ function App() {
     const from = player.selectedBars[0];
     const to = player.selectedBars[1];
     const moves = player.availableMoves;
+
     // check if from and to are the same, check if the destination is available for the player
     if (from == to) {
       toast("Canceled");
@@ -110,19 +118,23 @@ function App() {
 
       // update dice
       let d = [...dice];
-      let diceNum = from - to;
-      if (diceNum < 0) {
-        diceNum = -(diceNum + 11)
-        
-      } else if (diceNum > 6) {
-        diceNum = 11 - diceNum;
+      let diceNum;
+      if ((from <= 11 && turn == 1) || (from > 11 && turn == -1)) {
+        diceNum = from - to;
+        if (diceNum < 0) {
+          diceNum = to - (11 - from);
+        } else if (diceNum > 6) {
+          diceNum = from - (11 - to);
+        }
+      } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
+        diceNum = to - from;
       }
       const din = d.indexOf(diceNum);
       if (din > -1) {
         d.splice(index, 1);
       }
       setDice(d);
-      if (d == 0) {
+      if (d.length == 0) {
         setTurn((prev) => prev * -1);
       }
     }
