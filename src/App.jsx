@@ -131,7 +131,7 @@ function App() {
       }
       const din = d.indexOf(diceNum);
       if (din > -1) {
-        d.splice(index, 1);
+        d.splice(din, 1);
       }
       setDice(d);
       if (d.length == 0) {
@@ -173,6 +173,29 @@ function App() {
     if (player.selectedBars.length == 2) movement();
   }
 
+  function showDice() {
+    let str = "Dice Numbers:";
+    let d1 = "";
+    let d2 = "";
+    if (dice[0] != undefined) {
+      d1 = dice[0].toString();
+    }
+    if (dice[1] != undefined) {
+      d2 = dice[1].toString();
+    }
+
+    if (d1 != "") {
+      str = `${str} ${d1}`;
+    }
+    if (d2 != "") {
+      if (str.indexOf(" ") >= 0) {
+        str = `${str} ,`;
+      }
+      str = `${str} ${d2}`;
+    }
+    return str;
+  }
+
   return (
     <>
       <Board>
@@ -189,9 +212,7 @@ function App() {
         ))}
       </Board>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
-      <div className="dice">
-        {dice.length > 0 ? `Dice Numbers: ${dice[0]} , ${dice[1]}` : ""}
-      </div>
+      <div className="dice">{dice.length > 0 ? showDice() : ""}</div>
     </>
   );
 }
