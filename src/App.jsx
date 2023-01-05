@@ -20,25 +20,21 @@ function App() {
     moves: [],
   });
 
-
   function isWhiteTurn() {
-    if (turn === 1) return true
-    return false
+    if (turn === 1) return true;
+    return false;
   }
-
 
   function isBlackTurn() {
-    if (turn === -1) return true
-    return false
+    if (turn === -1) return true;
+    return false;
   }
-
 
   function getColor() {
     let color = "white";
     if (turn == -1) color = "black";
-    return color
+    return color;
   }
-
 
   // roll dice function, it will generate two random numbers between 1 and 6
   function rollDice() {
@@ -56,7 +52,7 @@ function App() {
     }
     setDice(dices);
 
-    // check if the player can play 
+    // check if the player can play
     if (isWhiteTurn() && whiteOut.length > 0) {
       entering(dices);
     } else if (isBlackTurn() && blackOut.length > 0) {
@@ -64,9 +60,7 @@ function App() {
     }
   }
 
-
   function entering(dices) {
-    
     // calculate the possible places where the player can move with the given dice numbers
     let possiblePlaces = [];
     if (isWhiteTurn()) {
@@ -100,9 +94,7 @@ function App() {
     }
   }
 
-
   function getAvailablePlaces(places, color) {
-
     let available = [];
     places.forEach((place) => {
       if (board[place].top() == color || board[place].top() == undefined) {
@@ -121,53 +113,52 @@ function App() {
     }
   }
 
-
   function getDestinations() {
     const from = player.selectedBars[0];
-    let destinations = []
-    let temp = []
-    if (from <= 11 && isWhiteTurn() || (from > 11 && isBlackTurn())) {
+    let destinations = [];
+    let temp = [];
+    if ((from <= 11 && isWhiteTurn()) || (from > 11 && isBlackTurn())) {
       if (dice[0] === dice[1]) {
-        let des = from - dice[0]
+        let des = from - dice[0];
         dice.forEach((d) => {
-          temp.push(des)
-        })
-        destinations = checkDests(temp, from)
+          temp.push(des);
+        });
+        destinations = checkDests(temp, from);
       } else {
-        let des1 = from - dice[0]
-        let des2 = from - dice[1]
-        temp = [des1, des2]
-        destinations = checkDests(temp, from)
+        let des1 = from - dice[0];
+        let des2 = from - dice[1];
+        temp = [des1, des2];
+        destinations = checkDests(temp, from);
       }
-      return destinations
+      return destinations;
     } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
       destinations.push(from + dice[0]);
       destinations.push(from + dice[1]);
       destinations.push(from + (dice[0] + dice[1]));
-      return destinations
+      return destinations;
       // TODO
     }
   }
 
-
   function checkDests(dests, from) {
-    if ((from <= 11 && turn == 1)) {
-      let res = []
+    if (from <= 11 && turn == 1) {
+      let res = [];
       dests.forEach((dest) => {
         if (dest < 0) {
           dest = -dest + 11;
-        } 
-        res.push(dest)
-      })
-      return res
+        }
+        res.push(dest);
+      });
+      return res;
     } else if (from > 11 && turn == -1) {
+      let res = [];
       dests.forEach((dest) => {
         if (dest < 12) {
           dest = 11 - dest;
         }
-        res.push(dest)
-      })
-      return res
+        res.push(dest);
+      });
+      return res;
     } else if (from <= 11 && turn == -1) {
       // TODO
     } else if (from > 11 && turn == 1) {
@@ -175,12 +166,12 @@ function App() {
     }
   }
 
-
   function availableMoves() {
-
     const destinations = getDestinations();
     const available = [];
-    let color = getColor()
+    let color = getColor();
+
+    console.log(destinations);
 
     destinations.forEach((dest) => {
       if (!isNaN(dest)) {
@@ -196,26 +187,23 @@ function App() {
     setPlayer(temp);
   }
 
-
   function movement(isEntering) {
-
     let from;
     let to;
 
     if (player.selectedBars.length === 1) {
       if (isWhiteTurn()) {
-        from = 11 
+        from = 11;
       } else {
-        from = 23
+        from = 23;
       }
       to = player.selectedBars[0];
     } else {
       from = player.selectedBars[0];
-      to = player.selectedBars[1]; 
+      to = player.selectedBars[1];
     }
-    const moves = player.moves; 
-    let color = getColor()
-
+    const moves = player.moves;
+    let color = getColor();
 
     // check if from and to are the same, check if the destination is available for the player
     if (from == to && !isEntering) {
@@ -234,13 +222,11 @@ function App() {
         }
       }
 
-
       if (isEntering) {
         board[to].push(color);
       } else {
         board[to].push(board[from].pop());
       }
-
 
       // update player
       let p = { ...player };
@@ -254,7 +240,6 @@ function App() {
       }
 
       setPlayer(p);
-
 
       // update dice
       let d = [...dice];
@@ -272,7 +257,7 @@ function App() {
       } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
         diceNum = to - from;
       }
-  
+
       const din = d.indexOf(diceNum);
       if (din > -1) {
         d.splice(din, 1);
@@ -288,10 +273,8 @@ function App() {
     setPlayer(temp);
   }
 
-
   // this function gets the bar's index that the player clicked on
   function select(index) {
-
     if (whiteOut.length > 0 && isWhiteTurn()) {
       let temp = { ...player };
       temp.selectedBars.push(index);
@@ -303,23 +286,20 @@ function App() {
       setPlayer(temp);
       movement(true);
     } else {
-
       // check if dice has been rolled
       if (dice.length == 0) return toast.error("You must roll the dice first!");
 
       // check for player's turn to be correct, and check if the first selected bar is empty
-      if ( player.selectedBars.length == 0) {
+      if (player.selectedBars.length == 0) {
         if (isWhiteTurn() && board[index].top() === "black") {
           return toast.error("It's not your turn!");
-
         } else if (isBlackTurn() && board[index].top() === "white") {
           return toast.error("It's not your turn!");
-
         } else if (board[index].top() === undefined) {
           return toast.error("There Is No Piece In This Place");
         }
       }
-        
+
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
@@ -329,7 +309,6 @@ function App() {
       if (player.selectedBars.length == 2) movement(false);
     }
   }
-
 
   function showDice() {
     let str = "Dice Numbers:";
