@@ -20,9 +20,7 @@ function App() {
     moves: [],
   });
 
-  const delay = ms => new Promise(
-    resolve => setTimeout(resolve, ms)
-  );
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function isWhiteTurn() {
     if (turn === 1) return true;
@@ -40,13 +38,12 @@ function App() {
     return color;
   }
 
-
   // roll dice function, it will generate two random numbers between 1 and 6
   function rollDice() {
     if (dice.length > 0) return toast.error("You can't roll the dice!");
 
-    let first = Math.floor(Math.random() * 6) + 1;
-    let second = Math.floor(Math.random() * 6) + 1;
+    const first = Math.floor(Math.random() * 6) + 1;
+    const second = Math.floor(Math.random() * 6) + 1;
 
     let dices = [first, second];
 
@@ -58,7 +55,7 @@ function App() {
     setDice(dices);
 
     // check if the player can play
-    checkOutState(dices)
+    checkOutState(dices);
   }
 
   function checkOutState(dices) {
@@ -70,7 +67,7 @@ function App() {
   }
 
   async function entering(dices) {
-    console.log("Entering")
+    console.log("Entering");
     // calculate the possible places where the player can move with the given dice numbers
     let possiblePlaces = [];
     if (isWhiteTurn()) {
@@ -102,7 +99,7 @@ function App() {
     } else {
       await delay(3000);
       toast.error("You can't play");
-      setDice([])
+      setDice([]);
       setTurn((prev) => prev * -1);
     }
   }
@@ -184,7 +181,6 @@ function App() {
     const available = [];
     let color = getColor();
 
-
     destinations.forEach((dest) => {
       if (!isNaN(dest)) {
         if (board[dest].top() == color || board[dest].top() == undefined) {
@@ -222,7 +218,6 @@ function App() {
       toast("Canceled");
     } else if (!moves.includes(to)) {
       toast.error("You can't do this");
-      console.log("here22")
     } else {
       // update the board
 
@@ -237,9 +232,9 @@ function App() {
 
       if (isEntering) {
         if (color == "white") {
-          whiteOut.pop()
+          whiteOut.pop();
         } else {
-          blackOut.pop()
+          blackOut.pop();
         }
         board[to].push(color);
       } else {
@@ -249,13 +244,11 @@ function App() {
       // update player
       let p = { ...player };
 
-
       const index = p.moves.indexOf(to);
       if (index > -1) {
         p.moves.splice(index, 1);
       }
-      
-      p.selectedBars = [];
+
       setPlayer(p);
 
       // update dice
@@ -285,21 +278,24 @@ function App() {
       }
     }
 
-
     if (player.moves.length === 0) {
       if (isWhiteTurn() && whiteOut.length > 0) {
         await delay(1500);
-        toast.error("You can't play")
-        setDice([])
+        toast.error("You can't play");
+        setDice([]);
         setTurn((prev) => prev * -1);
       } else if (isBlackTurn() && blackOut.length > 0) {
         await delay(1500);
-        toast.error("You can't play")
-        setDice([])
+        toast.error("You can't play");
+        setDice([]);
         setTurn((prev) => prev * -1);
       }
     }
-    
+
+    // free the selected bars
+    let p = { ...player };
+    p.selectedBars = [];
+    setPlayer(p);
   }
 
   // this function gets the bar's index that the player clicked on
@@ -310,8 +306,8 @@ function App() {
       setPlayer(temp);
       movement(true);
     } else if (blackOut.length > 0 && isBlackTurn()) {
-      console.log(blackOut)
-      console.log("here2")
+      console.log(blackOut);
+      console.log("here2");
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
