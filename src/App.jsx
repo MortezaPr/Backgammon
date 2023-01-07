@@ -47,8 +47,8 @@ function App() {
 
     let first = Math.floor(Math.random() * 6) + 1;
     let second = Math.floor(Math.random() * 6) + 1;
-    first = 1;
-    second = 2;
+    first = 5;
+    second = 6;
 
     let dices = [first, second];
 
@@ -165,7 +165,6 @@ function App() {
         const count = countPieceNumbers();
         if (count == 15 - whiteOut) {
           for (let i = 0; i < movesState.length; i++) {
-            console.log(movesState[i]);
             if (movesState[i] >= 24) {
               destinations[i] = -1;
             }
@@ -173,10 +172,15 @@ function App() {
         }
       } else if (isBlackTurn() && blackHits.length == 0) {
         const count = countPieceNumbers();
-        // todo
+        if (count == 15 - blackOut) {
+          for (let i = 0; i < movesState.length; i++) {
+            if (movesState[i] >= 12) {
+              destinations[i] = -1;
+            }
+          }
+        }
       }
       return destinations;
-      // TODO
     }
   }
 
@@ -224,10 +228,8 @@ function App() {
     const destinations = getDestinations();
     const available = [];
     let color = getColor();
-    console.log(destinations);
 
     destinations.forEach((dest) => {
-      console.log(dest);
       if (!isNaN(dest) && dest != -1) {
         if (board[dest].top() == color || board[dest].top() == undefined) {
           available.push(dest);
@@ -235,14 +237,13 @@ function App() {
           available.push(dest);
         }
       } else if (dest == -1) {
-        console.log("dsdd");
+        available.push(dest);
         setIsOut(true);
       }
     });
     let temp = { ...player };
     temp.moves = available;
     setPlayer(temp);
-    console.log(temp.moves);
   }
 
   async function movement(isEntering) {
@@ -355,14 +356,44 @@ function App() {
 
   function pieceOut() {
     const from = player.selectedBars[0];
-    const to = from;
     board[from].pop();
     if (isWhiteTurn()) {
       setWhiteOut((prev) => prev + 1);
     } else {
       setBlackOut((prev) => prev + 1);
     }
-    updateDice(from, to, false);
+    // updating dice and player state for getting pieces out the game
+    let d = [...dice];
+    if (dice[0] != dice[1] && dice.length > 1) {
+      let temp = { ...player };
+      let index = temp.moves.indexOf(-1);
+      if (temp.moves.length == 3 && index < 2) {
+        temp.moves.pop();
+        temp.moves.splice(index, 1);
+        d.splice(index, 1);
+        setDice([d]);
+      } else if (temp.moves.length == 3 && index == 2) {
+        temp.moves = [];
+        setDice([]);
+      } else if (temp.moves.length == 1) {
+        temp.moves = [];
+        setDice([]);
+      }
+      temp.selectedBars = [];
+      setPlayer(temp);
+    } else {
+      let temp = { ...player };
+      temp.moves.pop();
+      temp.selectedBars = [];
+      d.pop();
+      console.log(d);
+      setPlayer(temp);
+      setDice(d);
+    }
+    if (d.length === 0) {
+      setTurn((prev) => prev * -1);
+    }
+    setIsOut(false);
   }
 
   // this function gets the bar's index that the player clicked on
@@ -373,8 +404,6 @@ function App() {
       setPlayer(temp);
       movement(true);
     } else if (blackHits.length > 0 && isBlackTurn()) {
-      console.log(blackHits);
-      console.log("here2");
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
