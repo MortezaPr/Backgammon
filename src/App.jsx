@@ -12,8 +12,11 @@ function App() {
   const [dice, setDice] = useState([]);
   const [board, setBoard] = useState(initialState);
   const [turn, setTurn] = useState(1);
-  const [blackOut, setBlackOut] = useState([]);
-  const [whiteOut, setWhiteOut] = useState([]);
+  const [blackHits, setBlackHits] = useState([]);
+  const [whiteHits, setWhiteHits] = useState([]);
+  const [whiteOut, setWhiteOut] = useState(0);
+  const [blackOut, setBlackOut] = useState(0);
+  const [isOut, setIsOut] = useState(false);
 
   const [player, setPlayer] = useState({
     selectedBars: [],
@@ -42,8 +45,10 @@ function App() {
   function rollDice() {
     if (dice.length > 0) return toast.error("You can't roll the dice!");
 
-    const first = Math.floor(Math.random() * 6) + 1;
-    const second = Math.floor(Math.random() * 6) + 1;
+    let first = Math.floor(Math.random() * 6) + 1;
+    let second = Math.floor(Math.random() * 6) + 1;
+    first = 1;
+    second = 2;
 
     let dices = [first, second];
 
@@ -59,9 +64,9 @@ function App() {
   }
 
   function checkOutState(dices) {
-    if (isWhiteTurn() && whiteOut.length > 0) {
+    if (isWhiteTurn() && whiteHits.length > 0) {
       entering(dices);
-    } else if (isBlackTurn() && blackOut.length > 0) {
+    } else if (isBlackTurn() && blackHits.length > 0) {
       entering(dices);
     }
   }
@@ -133,27 +138,66 @@ function App() {
         dice.forEach((d) => {
           temp.push(des);
         });
-        destinations = checkDests(temp, from);
+        destinations = checkDestinations(temp, from);
       } else {
         let des1 = from - dice[0];
         let des2 = from - dice[1];
-        temp = [des1, des2];
-        destinations = checkDests(temp, from);
+        let des3 = from - (dice[0] + dice[1]);
+        temp = [des1, des2, des3];
+        destinations = checkDestinations(temp, from);
       }
       return destinations;
     } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
-      destinations.push(from + dice[0]);
-      destinations.push(from + dice[1]);
-      destinations.push(from + (dice[0] + dice[1]));
+      let movesState = [];
+      // doubles
+      if (dice[0] === dice[1]) {
+        let des = from + dice[0];
+        movesState = [des, des, des, des];
+      } else {
+        const d1 = from + dice[0];
+        const d2 = from + dice[1];
+        const d3 = from + (dice[0] + dice[1]);
+        movesState = [d1, d2, d3];
+      }
+      destinations = movesState;
+
+      if (isWhiteTurn() && whiteHits.length == 0) {
+        const count = countPieceNumbers();
+        if (count == 15 - whiteOut) {
+          for (let i = 0; i < movesState.length; i++) {
+            console.log(movesState[i]);
+            if (movesState[i] >= 24) {
+              destinations[i] = -1;
+            }
+          }
+        }
+      } else if (isBlackTurn() && blackHits.length == 0) {
+        const count = countPieceNumbers();
+        // todo
+      }
       return destinations;
       // TODO
     }
   }
 
-  function checkDests(dests, from) {
+  function countPieceNumbers() {
+    let places = [];
+    let count = 0;
+    if (isWhiteTurn()) {
+      places = [18, 19, 20, 21, 22, 23];
+    } else {
+      places = [6, 7, 8, 9, 10, 11];
+    }
+    places.forEach((index) => {
+      if (board[index].top() === getColor()) count += board[index].length();
+    });
+    return count;
+  }
+
+  function checkDestinations(destinations, from) {
     if (from <= 11 && turn == 1) {
       let res = [];
-      dests.forEach((dest) => {
+      destinations.forEach((dest) => {
         if (dest < 0) {
           dest = -dest + 11;
         }
@@ -162,7 +206,7 @@ function App() {
       return res;
     } else if (from > 11 && turn == -1) {
       let res = [];
-      dests.forEach((dest) => {
+      destinations.forEach((dest) => {
         if (dest < 12) {
           dest = 11 - dest;
         }
@@ -180,19 +224,25 @@ function App() {
     const destinations = getDestinations();
     const available = [];
     let color = getColor();
+    console.log(destinations);
 
     destinations.forEach((dest) => {
-      if (!isNaN(dest)) {
+      console.log(dest);
+      if (!isNaN(dest) && dest != -1) {
         if (board[dest].top() == color || board[dest].top() == undefined) {
           available.push(dest);
         } else if (board[dest].length() == 1) {
           available.push(dest);
         }
+      } else if (dest == -1) {
+        console.log("dsdd");
+        setIsOut(true);
       }
     });
     let temp = { ...player };
     temp.moves = available;
     setPlayer(temp);
+    console.log(temp.moves);
   }
 
   async function movement(isEntering) {
@@ -212,6 +262,7 @@ function App() {
     }
     const moves = player.moves;
     let color = getColor();
+    console.log(moves);
 
     // check if from and to are the same, check if the destination is available for the player
     if (from == to && !isEntering) {
@@ -224,17 +275,17 @@ function App() {
       // check for hitting other player's piece
       if (board[to].length() == 1) {
         if (color == "white" && board[to].top() == "black") {
-          blackOut.push(board[to].pop());
+          blackHits.push(board[to].pop());
         } else if (color == "black" && board[to].top() == "white") {
-          whiteOut.push(board[to].pop());
+          whiteHits.push(board[to].pop());
         }
       }
 
       if (isEntering) {
         if (color == "white") {
-          whiteOut.pop();
+          whiteHits.pop();
         } else {
-          blackOut.pop();
+          blackHits.pop();
         }
         board[to].push(color);
       } else {
@@ -252,39 +303,16 @@ function App() {
       setPlayer(p);
 
       // update dice
-      let d = [...dice];
-      let diceNum;
-      if ((from <= 11 && turn == 1) || (from > 11 && turn == -1)) {
-        diceNum = from - to;
-        if (isEntering) {
-          diceNum += 1;
-        }
-        if (diceNum < 0) {
-          diceNum = to - (11 - from);
-        } else if (diceNum > 6) {
-          diceNum = from - (11 - to);
-        }
-      } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
-        diceNum = to - from;
-      }
-
-      const din = d.indexOf(diceNum);
-      if (din > -1) {
-        d.splice(din, 1);
-      }
-      setDice(d);
-      if (d.length == 0) {
-        setTurn((prev) => prev * -1);
-      }
+      updateDice(from, to, isEntering);
     }
 
     if (player.moves.length === 0) {
-      if (isWhiteTurn() && whiteOut.length > 0) {
+      if (isWhiteTurn() && whiteHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
         setDice([]);
         setTurn((prev) => prev * -1);
-      } else if (isBlackTurn() && blackOut.length > 0) {
+      } else if (isBlackTurn() && blackHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
         setDice([]);
@@ -298,15 +326,54 @@ function App() {
     setPlayer(p);
   }
 
+  function updateDice(from, to, isEntering) {
+    let d = [...dice];
+    let diceNum;
+    if ((from <= 11 && turn == 1) || (from > 11 && turn == -1)) {
+      diceNum = from - to;
+      if (isEntering) {
+        diceNum += 1;
+      }
+      if (diceNum < 0) {
+        diceNum = to - (11 - from);
+      } else if (diceNum > 6) {
+        diceNum = from - (11 - to);
+      }
+    } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
+      diceNum = to - from;
+    }
+
+    const din = d.indexOf(diceNum);
+    if (din > -1) {
+      d.splice(din, 1);
+    }
+    setDice(d);
+    if (d.length == 0) {
+      setTurn((prev) => prev * -1);
+    }
+  }
+
+  function pieceOut() {
+    const from = player.selectedBars[0];
+    const to = from;
+    board[from].pop();
+    if (isWhiteTurn()) {
+      setWhiteOut((prev) => prev + 1);
+    } else {
+      setBlackOut((prev) => prev + 1);
+    }
+    updateDice(from, to, false);
+  }
+
   // this function gets the bar's index that the player clicked on
   function select(index) {
-    if (whiteOut.length > 0 && isWhiteTurn()) {
+    if (whiteHits.length > 0 && isWhiteTurn()) {
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
       movement(true);
-    } else if (blackOut.length > 0 && isBlackTurn()) {
-      console.log(blackOut);
+    } else if (blackHits.length > 0 && isBlackTurn()) {
+      console.log(blackHits);
       console.log("here2");
       let temp = { ...player };
       temp.selectedBars.push(index);
@@ -376,6 +443,7 @@ function App() {
         ))}
       </Board>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
+      {isOut ? <button onClick={pieceOut}>Out</button> : ""}
       <div className="dice">{dice.length > 0 ? showDice() : ""}</div>
     </>
   );
