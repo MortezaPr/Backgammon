@@ -14,7 +14,7 @@ function App() {
     turn: 1,
     blackHits: [],
     whiteHits: [],
-    blackOut: 14,
+    blackOut: 0,
     whiteOut: 0,
   });
 
