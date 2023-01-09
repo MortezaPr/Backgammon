@@ -1,72 +1,71 @@
 import { useState, useEffect } from "react";
 import Board from "./components/Board";
 import Bar from "./components/Bar";
+import Dice from "./components/Dice";
 import { toast } from "react-hot-toast";
 import Piece from "./components/Piece";
 import "./App.css";
 import { initialState } from "./logic";
 
-// https://salamdonya.com/fun/how-to-play-backgammon
-
 function App() {
-  const [dice, setDice] = useState([]);
-  const [board, setBoard] = useState(initialState);
-  const [turn, setTurn] = useState(1);
-  const [blackHits, setBlackHits] = useState([]);
-  const [whiteHits, setWhiteHits] = useState([]);
-  const [whiteOut, setWhiteOut] = useState(0);
-  const [blackOut, setBlackOut] = useState(0);
-  const [isOut, setIsOut] = useState(false);
+  const [game, setGame] = useState({
+    dice: [],
+    board: initialState,
+    turn: 1,
+    blackHits: [],
+    whiteHits: [],
+    blackOut: 0,
+    whiteOut: 0,
+  });
 
   const [player, setPlayer] = useState({
     selectedBars: [],
     moves: [],
+    isOut: false,
   });
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function isWhiteTurn() {
-    if (turn === 1) return true;
+    if (game.turn === 1) return true;
     return false;
   }
 
   function isBlackTurn() {
-    if (turn === -1) return true;
+    if (game.turn === -1) return true;
     return false;
   }
 
   function getColor() {
     let color = "white";
-    if (turn == -1) color = "black";
+    if (game.turn == -1) color = "black";
     return color;
   }
 
   // roll dice function, it will generate two random numbers between 1 and 6
   function rollDice() {
-    if (dice.length > 0) return toast.error("You can't roll the dice!");
+    if (game.dice.length > 0) return toast.error("You can't roll the dice!");
+    let tempGame = { ...game };
 
-    let first = Math.floor(Math.random() * 6) + 1;
-    let second = Math.floor(Math.random() * 6) + 1;
-    first = 5;
-    second = 6;
+    var first = Math.floor(Math.random() * 6) + 1;
+    var second = Math.floor(Math.random() * 6) + 1;
 
     let dices = [first, second];
-
-    // If a player rolls two of the same number (doubles)
     if (first == second) {
       dices.push(first);
       dices.push(second);
     }
-    setDice(dices);
+    tempGame.dice = dices;
+    setGame(tempGame);
 
     // check if the player can play
     checkOutState(dices);
   }
 
   function checkOutState(dices) {
-    if (isWhiteTurn() && whiteHits.length > 0) {
+    if (isWhiteTurn() && game.whiteHits.length > 0) {
       entering(dices);
-    } else if (isBlackTurn() && blackHits.length > 0) {
+    } else if (isBlackTurn() && game.blackHits.length > 0) {
       entering(dices);
     }
   }
@@ -112,9 +111,12 @@ function App() {
   function getAvailablePlaces(places, color) {
     let available = [];
     places.forEach((place) => {
-      if (board[place].top() == color || board[place].top() == undefined) {
+      if (
+        game.board[place].top() == color ||
+        game.board[place].top() == undefined
+      ) {
         available.push(place);
-      } else if (board[place].length() == 1) {
+      } else if (game.board[place].length() == 1) {
         available.push(place);
       }
     });
@@ -133,46 +135,49 @@ function App() {
     let destinations = [];
     let temp = [];
     if ((from <= 11 && isWhiteTurn()) || (from > 11 && isBlackTurn())) {
-      if (dice[0] === dice[1]) {
-        let des = from - dice[0];
-        dice.forEach((d) => {
+      if (game.dice[0] === game.dice[1]) {
+        let des = from - game.dice[0];
+        game.dice.forEach((d) => {
           temp.push(des);
         });
         destinations = checkDestinations(temp, from);
       } else {
-        let des1 = from - dice[0];
-        let des2 = from - dice[1];
-        let des3 = from - (dice[0] + dice[1]);
+        let des1 = from - game.dice[0];
+        let des2 = from - game.dice[1];
+        let des3 = from - (game.dice[0] + game.dice[1]);
         temp = [des1, des2, des3];
         destinations = checkDestinations(temp, from);
       }
       return destinations;
-    } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
+    } else if (
+      (from <= 11 && game.turn == -1) ||
+      (from > 11 && game.turn == 1)
+    ) {
       let movesState = [];
       // doubles
-      if (dice[0] === dice[1]) {
-        let des = from + dice[0];
+      if (game.dice[0] === game.dice[1]) {
+        let des = from + game.dice[0];
         movesState = [des, des, des, des];
       } else {
-        const d1 = from + dice[0];
-        const d2 = from + dice[1];
-        const d3 = from + (dice[0] + dice[1]);
+        const d1 = from + game.dice[0];
+        const d2 = from + game.dice[1];
+        const d3 = from + (game.dice[0] + game.dice[1]);
         movesState = [d1, d2, d3];
       }
       destinations = movesState;
 
-      if (isWhiteTurn() && whiteHits.length == 0) {
+      if (isWhiteTurn() && game.whiteHits.length == 0) {
         const count = countPieceNumbers();
-        if (count == 15 - whiteOut) {
+        if (count == 15 - game.whiteOut) {
           for (let i = 0; i < movesState.length; i++) {
             if (movesState[i] >= 24) {
               destinations[i] = -1;
             }
           }
         }
-      } else if (isBlackTurn() && blackHits.length == 0) {
+      } else if (isBlackTurn() && game.blackHits.length == 0) {
         const count = countPieceNumbers();
-        if (count == 15 - blackOut) {
+        if (count == 15 - game.blackOut) {
           for (let i = 0; i < movesState.length; i++) {
             if (movesState[i] >= 12) {
               destinations[i] = -1;
@@ -193,13 +198,14 @@ function App() {
       places = [6, 7, 8, 9, 10, 11];
     }
     places.forEach((index) => {
-      if (board[index].top() === getColor()) count += board[index].length();
+      if (game.board[index].top() === getColor())
+        count += game.board[index].length();
     });
     return count;
   }
 
   function checkDestinations(destinations, from) {
-    if (from <= 11 && turn == 1) {
+    if (from <= 11 && game.turn == 1) {
       let res = [];
       destinations.forEach((dest) => {
         if (dest < 0) {
@@ -208,7 +214,7 @@ function App() {
         res.push(dest);
       });
       return res;
-    } else if (from > 11 && turn == -1) {
+    } else if (from > 11 && game.turn == -1) {
       let res = [];
       destinations.forEach((dest) => {
         if (dest < 12) {
@@ -217,10 +223,6 @@ function App() {
         res.push(dest);
       });
       return res;
-    } else if (from <= 11 && turn == -1) {
-      // TODO
-    } else if (from > 11 && turn == 1) {
-      // TODO
     }
   }
 
@@ -231,9 +233,12 @@ function App() {
 
     destinations.forEach((dest) => {
       if (!isNaN(dest) && dest != -1) {
-        if (board[dest].top() == color || board[dest].top() == undefined) {
+        if (
+          game.board[dest].top() == color ||
+          game.board[dest].top() == undefined
+        ) {
           available.push(dest);
-        } else if (board[dest].length() == 1) {
+        } else if (game.board[dest].length() == 1) {
           available.push(dest);
         }
       } else if (dest == -1) {
@@ -274,23 +279,23 @@ function App() {
       // update the board
 
       // check for hitting other player's piece
-      if (board[to].length() == 1) {
-        if (color == "white" && board[to].top() == "black") {
-          blackHits.push(board[to].pop());
-        } else if (color == "black" && board[to].top() == "white") {
-          whiteHits.push(board[to].pop());
+      if (game.board[to].length() == 1) {
+        if (color == "white" && game.board[to].top() == "black") {
+          game.blackHits.push(game.board[to].pop());
+        } else if (color == "black" && game.board[to].top() == "white") {
+          game.whiteHits.push(game.board[to].pop());
         }
       }
 
       if (isEntering) {
         if (color == "white") {
-          whiteHits.pop();
+          game.whiteHits.pop();
         } else {
-          blackHits.pop();
+          game.blackHits.pop();
         }
-        board[to].push(color);
+        game.board[to].push(color);
       } else {
-        board[to].push(board[from].pop());
+        game.board[to].push(game.board[from].pop());
       }
 
       // update player
@@ -308,12 +313,12 @@ function App() {
     }
 
     if (player.moves.length === 0) {
-      if (isWhiteTurn() && whiteHits.length > 0) {
+      if (isWhiteTurn() && game.whiteHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
         setDice([]);
         setTurn((prev) => prev * -1);
-      } else if (isBlackTurn() && blackHits.length > 0) {
+      } else if (isBlackTurn() && game.blackHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
         setDice([]);
@@ -328,9 +333,9 @@ function App() {
   }
 
   function updateDice(from, to, isEntering) {
-    let d = [...dice];
+    let tempGame = { ...game };
     let diceNum;
-    if ((from <= 11 && turn == 1) || (from > 11 && turn == -1)) {
+    if ((from <= 11 && game.turn == 1) || (from > 11 && game.turn == -1)) {
       diceNum = from - to;
       if (isEntering) {
         diceNum += 1;
@@ -340,85 +345,93 @@ function App() {
       } else if (diceNum > 6) {
         diceNum = from - (11 - to);
       }
-    } else if ((from <= 11 && turn == -1) || (from > 11 && turn == 1)) {
+    } else if (
+      (from <= 11 && game.turn == -1) ||
+      (from > 11 && game.turn == 1)
+    ) {
       diceNum = to - from;
     }
 
-    const din = d.indexOf(diceNum);
+    const din = tempGame.dice.indexOf(diceNum);
     if (din > -1) {
-      d.splice(din, 1);
+      tempGame.dice.splice(din, 1);
     }
-    setDice(d);
-    if (d.length == 0) {
-      setTurn((prev) => prev * -1);
+    if (tempGame.dice.length == 0) {
+      tempGame.turn = tempGame.turn * -1;
     }
+    setGame(tempGame);
   }
 
   function pieceOut() {
     const from = player.selectedBars[0];
-    board[from].pop();
+    let tempGame = { ...game };
+    let tempPlayer = { ...player };
+    game.board[from].pop();
     if (isWhiteTurn()) {
-      setWhiteOut((prev) => prev + 1);
+      tempGame.whiteOut = tempGame.whiteOut + 1;
     } else {
-      setBlackOut((prev) => prev + 1);
+      tempGame.blackOut = tempGame.blackOut + 1;
     }
     // updating dice and player state for getting pieces out the game
-    let d = [...dice];
-    if (dice[0] != dice[1] && dice.length > 1) {
-      let temp = { ...player };
-      let index = temp.moves.indexOf(-1);
-      if (temp.moves.length == 3 && index < 2) {
-        temp.moves.pop();
-        temp.moves.splice(index, 1);
-        d.splice(index, 1);
-        setDice([d]);
-      } else if (temp.moves.length == 3 && index == 2) {
-        temp.moves = [];
-        setDice([]);
-      } else if (temp.moves.length == 1) {
-        temp.moves = [];
-        setDice([]);
+
+    if (game.dice[0] != game.dice[1] && game.dice.length > 1) {
+      let index = tempPlayer.moves.indexOf(-1);
+      if (tempPlayer.moves.length == 3 && index < 2) {
+        tempPlayer.moves.pop();
+        tempPlayer.moves.splice(index, 1);
+        tempGame.dice.splice(index, 1);
+        setGame(tempGame);
+      } else if (tempPlayer.moves.length == 3 && index == 2) {
+        tempPlayer.moves = [];
+        tempGame.dice = [];
+        setGame(tempGame);
+      } else if (tempPlayer.moves.length == 1) {
+        tempPlayer.moves = [];
+        tempGame.dice = [];
+        setGame(tempGame);
       }
-      temp.selectedBars = [];
-      setPlayer(temp);
+      tempPlayer.selectedBars = [];
+      // setPlayer(tempPlayer);
     } else {
       let temp = { ...player };
       temp.moves.pop();
       temp.selectedBars = [];
-      d.pop();
-      console.log(d);
-      setPlayer(temp);
-      setDice(d);
+      tempGame.dice.pop();
+      // setPlayer(temp);
+      setGame(tempGame);
     }
     if (d.length === 0) {
-      setTurn((prev) => prev * -1);
+      tempGame.turn = tempGame.turn * -1;
+      setGame(tempGame.turn);
     }
-    setIsOut(false);
+    tempPlayer.isOut = false;
+    setPlayer(tempPlayer);
   }
 
   // this function gets the bar's index that the player clicked on
   function select(index) {
-    if (whiteHits.length > 0 && isWhiteTurn()) {
+    if (game.whiteHits.length > 0 && isWhiteTurn()) {
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
       movement(true);
-    } else if (blackHits.length > 0 && isBlackTurn()) {
+    } else if (game.blackHits.length > 0 && isBlackTurn()) {
       let temp = { ...player };
       temp.selectedBars.push(index);
       setPlayer(temp);
       movement(true);
     } else {
       // check if dice has been rolled
-      if (dice.length == 0) return toast.error("You must roll the dice first!");
+      if (game.dice.length == 0)
+        return toast.error("You must roll the dice first!");
 
       // check for player's turn to be correct, and check if the first selected bar is empty
       if (player.selectedBars.length == 0) {
-        if (isWhiteTurn() && board[index].top() === "black") {
+        if (isWhiteTurn() && game.board[index].top() === "black") {
           return toast.error("It's not your turn!");
-        } else if (isBlackTurn() && board[index].top() === "white") {
+        } else if (isBlackTurn() && game.board[index].top() === "white") {
           return toast.error("It's not your turn!");
-        } else if (board[index].top() === undefined) {
+        } else if (game.board[index].top() === undefined) {
           return toast.error("There Is No Piece In This Place");
         }
       }
@@ -437,11 +450,11 @@ function App() {
     let str = "Dice Numbers:";
     let d1 = "";
     let d2 = "";
-    if (dice[0] != undefined) {
-      d1 = dice[0].toString();
+    if (game.dice[0] != undefined) {
+      d1 = game.dice[0].toString();
     }
-    if (dice[1] != undefined) {
-      d2 = dice[1].toString();
+    if (game.dice[1] != undefined) {
+      d2 = game.dice[1].toString();
     }
 
     if (d1 != "") {
@@ -459,7 +472,7 @@ function App() {
   return (
     <>
       <Board>
-        {board.map((bar, barIdx) => (
+        {game.board.map((bar, barIdx) => (
           <Bar
             isTopRow={barIdx > 11}
             onClick={() => select(barIdx)}
@@ -471,9 +484,13 @@ function App() {
           </Bar>
         ))}
       </Board>
+      <div className="container">
+        <Dice dice={game.dice[0]} />
+        <Dice dice={game.dice[1]} />
+      </div>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
-      {isOut ? <button onClick={pieceOut}>Out</button> : ""}
-      <div className="dice">{dice.length > 0 ? showDice() : ""}</div>
+      {game.isOut ? <button onClick={pieceOut}>Out</button> : ""}
+      <div className="dice">{game.dice.length > 0 ? showDice() : ""}</div>
     </>
   );
 }
