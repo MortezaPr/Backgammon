@@ -14,7 +14,7 @@ function App() {
     turn: 1,
     blackHits: [],
     whiteHits: [],
-    blackOut: 0,
+    blackOut: 14,
     whiteOut: 0,
   });
 
@@ -176,6 +176,7 @@ function App() {
         }
       } else if (isBlackTurn() && game.blackHits.length == 0) {
         const count = countPieceNumbers();
+        console.log(count);
         if (count == 15 - game.blackOut) {
           for (let i = 0; i < movesState.length; i++) {
             if (movesState[i] >= 12) {
@@ -229,6 +230,8 @@ function App() {
     const destinations = getDestinations();
     const available = [];
     let color = getColor();
+    let temp = { ...player };
+    console.log(destinations);
 
     destinations.forEach((dest) => {
       if (!isNaN(dest) && dest != -1) {
@@ -242,37 +245,35 @@ function App() {
         }
       } else if (dest == -1) {
         available.push(dest);
-        setIsOut(true);
+        temp.isOut = true;
       }
     });
-    let temp = { ...player };
     temp.moves = available;
     setPlayer(temp);
   }
 
-  async function checkForWinner() {
-    if (game.whiteOut === 15 || game.blackOut === 15) {
-      if (game.whiteOut === 15) {
-        toast.success("White Wins!");
-      } else if (game.blackOut === 15) {
-        toast.success("Black Wins!");
-      }
-      await delay(4000);
-      let tempGame = { ...game };
-      let tempPlayer = { ...player };
-      tempGame.board = initialState;
-      tempGame.dice = [];
-      tempGame.turn = 1;
-      tempGame.blackHits = 0;
-      tempGame.whiteHits = 0;
-      tempGame.whiteOut = 0;
-      tempGame.blackOut = 0;
-      setGame(tempGame);
-      tempPlayer.isOut = false;
-      tempPlayer.moves = [];
-      tempPlayer.selectedBars = [];
-      setPlayer(tempPlayer);
+  async function checkForWinner(winner) {
+    if (winner === "black") {
+      toast.success("Black Wins!");
+    } else {
+      toast.success("White Wins!");
     }
+    await delay(4000);
+    // return to game's initial state
+    let tempGame = { ...game };
+    let tempPlayer = { ...player };
+    tempGame.board = initialState;
+    tempGame.dice = [];
+    tempGame.turn = 1;
+    tempGame.blackHits = 0;
+    tempGame.whiteHits = 0;
+    tempGame.whiteOut = 0;
+    tempGame.blackOut = 0;
+    setGame(tempGame);
+    tempPlayer.isOut = false;
+    tempPlayer.moves = [];
+    tempPlayer.selectedBars = [];
+    setPlayer(tempPlayer);
   }
 
   async function movement(isEntering) {
@@ -353,7 +354,6 @@ function App() {
     let p = { ...player };
     p.selectedBars = [];
     setPlayer(p);
-    checkForWinner();
   }
 
   function updateDice(from, to, isEntering) {
@@ -424,12 +424,18 @@ function App() {
       // setPlayer(temp);
       setGame(tempGame);
     }
-    if (d.length === 0) {
+    if (tempGame.dice.length === 0) {
       tempGame.turn = tempGame.turn * -1;
       setGame(tempGame.turn);
     }
+    console.log(tempGame);
     tempPlayer.isOut = false;
     setPlayer(tempPlayer);
+    if (tempGame.blackOut === 15) {
+      checkForWinner("black");
+    } else if (tempGame.whiteOut === 15) {
+      checkForWinner("white");
+    }
   }
 
   // this function gets the bar's index that the player clicked on
@@ -490,7 +496,7 @@ function App() {
         <Dice dice={game.dice[1]} />
       </div>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
-      {game.isOut ? <button onClick={pieceOut}>Out</button> : ""}
+      {player.isOut ? <button onClick={pieceOut}>Out</button> : ""}
     </>
   );
 }
