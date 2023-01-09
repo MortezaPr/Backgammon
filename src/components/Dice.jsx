@@ -1,4 +1,4 @@
-import "./dice.css";
+import "./Dice.css";
 import DiceImage1 from "../images/Alea_a1.png";
 import DiceImage2 from "../images/Alea_a2.png";
 import DiceImage3 from "../images/Alea_a3.png";

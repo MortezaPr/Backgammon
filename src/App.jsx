@@ -71,7 +71,6 @@ function App() {
   }
 
   async function entering(dices) {
-    console.log("Entering");
     // calculate the possible places where the player can move with the given dice numbers
     let possiblePlaces = [];
     if (isWhiteTurn()) {
@@ -251,6 +250,31 @@ function App() {
     setPlayer(temp);
   }
 
+  async function checkForWinner() {
+    if (game.whiteOut === 15 || game.blackOut === 15) {
+      if (game.whiteOut === 15) {
+        toast.success("White Wins!");
+      } else if (game.blackOut === 15) {
+        toast.success("Black Wins!");
+      }
+      await delay(4000);
+      let tempGame = { ...game };
+      let tempPlayer = { ...player };
+      tempGame.board = initialState;
+      tempGame.dice = [];
+      tempGame.turn = 1;
+      tempGame.blackHits = 0;
+      tempGame.whiteHits = 0;
+      tempGame.whiteOut = 0;
+      tempGame.blackOut = 0;
+      setGame(tempGame);
+      tempPlayer.isOut = false;
+      tempPlayer.moves = [];
+      tempPlayer.selectedBars = [];
+      setPlayer(tempPlayer);
+    }
+  }
+
   async function movement(isEntering) {
     let from;
     let to;
@@ -268,7 +292,6 @@ function App() {
     }
     const moves = player.moves;
     let color = getColor();
-    console.log(moves);
 
     // check if from and to are the same, check if the destination is available for the player
     if (from == to && !isEntering) {
@@ -330,6 +353,7 @@ function App() {
     let p = { ...player };
     p.selectedBars = [];
     setPlayer(p);
+    checkForWinner();
   }
 
   function updateDice(from, to, isEntering) {
@@ -446,29 +470,6 @@ function App() {
     }
   }
 
-  function showDice() {
-    let str = "Dice Numbers:";
-    let d1 = "";
-    let d2 = "";
-    if (game.dice[0] != undefined) {
-      d1 = game.dice[0].toString();
-    }
-    if (game.dice[1] != undefined) {
-      d2 = game.dice[1].toString();
-    }
-
-    if (d1 != "") {
-      str = `${str} ${d1}`;
-    }
-    if (d2 != "") {
-      if (str.indexOf(" ") >= 0) {
-        str = `${str} ,`;
-      }
-      str = `${str} ${d2}`;
-    }
-    return str;
-  }
-
   return (
     <>
       <Board>
@@ -484,13 +485,12 @@ function App() {
           </Bar>
         ))}
       </Board>
-      <div className="container">
+      <div style={{ padding: "0.5rem" }}>
         <Dice dice={game.dice[0]} />
         <Dice dice={game.dice[1]} />
       </div>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
       {game.isOut ? <button onClick={pieceOut}>Out</button> : ""}
-      <div className="dice">{game.dice.length > 0 ? showDice() : ""}</div>
     </>
   );
 }
