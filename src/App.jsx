@@ -24,6 +24,11 @@ function App() {
     isOut: false,
   });
 
+
+  useEffect(() => {
+    console.log("sad")
+  },[game.turn])
+
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function isWhiteTurn() {
@@ -47,8 +52,10 @@ function App() {
     if (game.dice.length > 0) return toast.error("You can't roll the dice!");
     let tempGame = { ...game };
 
-    const first = Math.floor(Math.random() * 6) + 1;
-    const second = Math.floor(Math.random() * 6) + 1;
+    let first = Math.floor(Math.random() * 6) + 1;
+    let second = Math.floor(Math.random() * 6) + 1;
+    first = 5
+    second = 4
 
     let dices = [first, second];
     if (first == second) {
@@ -360,7 +367,10 @@ function App() {
         await delay(1500);
         toast.error("You can't play");
         tempGame.dice = []
-      }
+      } 
+    }
+
+    if (game.dice.length === 0) {
       tempGame.turn = tempGame.turn * -1
     }
 
@@ -401,7 +411,6 @@ function App() {
     if (tempGame.dice.length == 0) {
       tempGame.turn = tempGame.turn * -1;
     }
-    console.log(tempGame)
   }
 
   async function pieceOut() {
