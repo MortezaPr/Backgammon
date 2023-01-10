@@ -47,10 +47,8 @@ function App() {
     if (game.dice.length > 0) return toast.error("You can't roll the dice!");
     let tempGame = { ...game };
 
-    let first = Math.floor(Math.random() * 6) + 1;
-    let second = Math.floor(Math.random() * 6) + 1;
-    first = 3 
-    second = 3 
+    const first = Math.floor(Math.random() * 6) + 1;
+    const second = Math.floor(Math.random() * 6) + 1;
 
     let dices = [first, second];
     if (first == second) {
