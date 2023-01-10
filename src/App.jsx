@@ -24,10 +24,9 @@ function App() {
     isOut: false,
   });
 
-
   useEffect(() => {
-    console.log("sad")
-  },[game.turn])
+    console.log("sad");
+  }, [game.turn]);
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -52,10 +51,8 @@ function App() {
     if (game.dice.length > 0) return toast.error("You can't roll the dice!");
     let tempGame = { ...game };
 
-    let first = Math.floor(Math.random() * 6) + 1;
-    let second = Math.floor(Math.random() * 6) + 1;
-    first = 5
-    second = 4
+    const first = Math.floor(Math.random() * 6) + 1;
+    const second = Math.floor(Math.random() * 6) + 1;
 
     let dices = [first, second];
     if (first == second) {
@@ -129,7 +126,7 @@ function App() {
 
     // if there is no available places return undefined
     if (available.length == 0) {
-      game.dice = []
+      game.dice = [];
       return undefined;
     } else {
       return available;
@@ -237,9 +234,10 @@ function App() {
     const available = [];
     let color = getColor();
     let temp = { ...player };
+    console.log(destinations);
 
     destinations.forEach((dest) => {
-      if (!isNaN(dest) && dest != -1) {
+      if (!isNaN(dest) && dest != -1 && dest <= 23) {
         if (
           game.board[dest].top() == color ||
           game.board[dest].top() == undefined
@@ -255,12 +253,12 @@ function App() {
     });
     temp.moves = available;
     if (temp.moves.length === 0) {
-      let tempGame = {...game}
-      temp.selectedBars = []
-      tempGame.turn = tempGame.turn * -1 
-      tempGame.dice = []
-      setGame(tempGame)
-      toast.error("You can't Play!")
+      let tempGame = { ...game };
+      temp.selectedBars = [];
+      tempGame.turn = tempGame.turn * -1;
+      tempGame.dice = [];
+      setGame(tempGame);
+      toast.error("You can't Play!");
     }
     setPlayer(temp);
   }
@@ -306,8 +304,7 @@ function App() {
     }
     const moves = player.moves;
     let color = getColor();
-    let tempGame = {...game}
-
+    let tempGame = { ...game };
 
     // check if from and to are the same, check if the destination is available for the player
     if (from == to && !isEntering) {
@@ -349,12 +346,11 @@ function App() {
 
       // update dice
       if (tempGame.dice.length > 2) {
-        tempGame.dice.pop()
-        setGame(tempGame)
+        tempGame.dice.pop();
+        setGame(tempGame);
       } else {
         updateDice(from, to, isEntering);
       }
-
     }
 
     // if more than one piece was hit
@@ -362,19 +358,19 @@ function App() {
       if (isWhiteTurn() && tempGame.whiteHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
-        tempGame.dice = []
+        tempGame.dice = [];
       } else if (isBlackTurn() && tempGame.blackHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
-        tempGame.dice = []
-      } 
+        tempGame.dice = [];
+      }
     }
 
     if (game.dice.length === 0) {
-      tempGame.turn = tempGame.turn * -1
+      tempGame.turn = tempGame.turn * -1;
     }
 
-    setGame(tempGame)
+    setGame(tempGame);
 
     // free the selected bars
     let p = { ...player };
@@ -392,7 +388,7 @@ function App() {
       }
       if (diceNum < 0) {
         diceNum = to - (11 - from);
-      } 
+      }
       if (diceNum > 6) {
         diceNum = from - (11 - to);
       }
@@ -407,7 +403,7 @@ function App() {
     if (din > -1) {
       tempGame.dice.splice(din, 1);
     }
-    
+
     if (tempGame.dice.length == 0) {
       tempGame.turn = tempGame.turn * -1;
     }
@@ -454,7 +450,6 @@ function App() {
     }
     tempPlayer.isOut = false;
     setPlayer(tempPlayer);
-
 
     if (tempGame.blackOut === 15) {
       checkForWinner("black");
@@ -505,15 +500,12 @@ function App() {
     if (game.dice.length === 4) {
       return (
         <>
-        <Dice dice={game.dice[2]} />
-        <Dice dice={game.dice[3]} />
+          <Dice dice={game.dice[2]} />
+          <Dice dice={game.dice[3]} />
         </>
-      )
+      );
     } else if (game.dice.length === 3) {
-      return (
-        <Dice dice={game.dice[2]} />
-
-      )
+      return <Dice dice={game.dice[2]} />;
     }
   }
 
