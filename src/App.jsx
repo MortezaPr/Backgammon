@@ -392,12 +392,15 @@ function App() {
       diceNum = to - from;
     }
 
+
     if (diceNum === -1) {
       tempGame.dice = []
     } else {
       const din = tempGame.dice.indexOf(diceNum);
       if (din > -1) {
         tempGame.dice.splice(din, 1);
+      } else {
+          tempGame.dice = [] 
       }
     }
 
