@@ -5,16 +5,16 @@ import Dice from "./components/Dice";
 import { toast } from "react-hot-toast";
 import Piece from "./components/Piece";
 import "./App.css";
-import { initialState } from "./logic";
+import { initialState, tempInitialState } from "./logic";
 
 function App() {
   const [game, setGame] = useState({
     dice: [],
-    board: initialState,
+    board: tempInitialState,
     turn: 1,
     blackHits: [],
     whiteHits: [],
-    blackOut: 12,
+    blackOut: 14,
     whiteOut: 0,
   });
 
@@ -122,7 +122,7 @@ function App() {
 
     // if there is no available places return undefined
     if (available.length == 0) {
-      setDice([]);
+      game.dice = []
       return undefined;
     } else {
       return available;
@@ -143,8 +143,7 @@ function App() {
       } else {
         let des1 = from - game.dice[0];
         let des2 = from - game.dice[1];
-        let des3 = from - (game.dice[0] + game.dice[1]);
-        temp = [des1, des2, des3];
+        temp = [des1, des2];
         destinations = checkDestinations(temp, from);
       }
       return destinations;
@@ -261,11 +260,11 @@ function App() {
 
   async function checkForWinner(winner) {
     if (winner === "black") {
-      toast.success("Black Wins!");
+      toast("⚫ Black Wins! ⚫");
     } else {
-      toast.success("White Wins!");
+      toast("🔘 White Wins! 🔘");
     }
-    await delay(4000);
+    await delay(3000);
     // return to game's initial state
     let tempGame = { ...game };
     let tempPlayer = { ...player };
@@ -300,6 +299,7 @@ function App() {
     }
     const moves = player.moves;
     let color = getColor();
+    let tempGame = {...game}
 
 
     // check if from and to are the same, check if the destination is available for the player
@@ -311,23 +311,23 @@ function App() {
       // update the board
 
       // check for hitting other player's piece
-      if (game.board[to].length() == 1) {
-        if (color == "white" && game.board[to].top() == "black") {
-          game.blackHits.push(game.board[to].pop());
-        } else if (color == "black" && game.board[to].top() == "white") {
-          game.whiteHits.push(game.board[to].pop());
+      if (tempGame.board[to].length() == 1) {
+        if (color == "white" && tempGame.board[to].top() == "black") {
+          tempGame.blackHits.push(tempGame.board[to].pop());
+        } else if (color == "black" && tempGame.board[to].top() == "white") {
+          tempGame.whiteHits.push(tempGame.board[to].pop());
         }
       }
 
       if (isEntering) {
         if (color == "white") {
-          game.whiteHits.pop();
+          tempGame.whiteHits.pop();
         } else {
-          game.blackHits.pop();
+          tempGame.blackHits.pop();
         }
-        game.board[to].push(color);
+        tempGame.board[to].push(color);
       } else {
-        game.board[to].push(game.board[from].pop());
+        tempGame.board[to].push(tempGame.board[from].pop());
       }
 
       // update player
@@ -341,8 +341,7 @@ function App() {
       setPlayer(p);
 
       // update dice
-      if (game.dice.length > 2) {
-        let tempGame = {...game}
+      if (tempGame.dice.length > 2) {
         tempGame.dice.pop()
         setGame(tempGame)
       } else {
@@ -351,19 +350,21 @@ function App() {
 
     }
 
+    // if more than one piece was hit
     if (player.moves.length === 0) {
-      if (isWhiteTurn() && game.whiteHits.length > 0) {
+      if (isWhiteTurn() && tempGame.whiteHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
-        setDice([]);
-        setTurn((prev) => prev * -1);
-      } else if (isBlackTurn() && game.blackHits.length > 0) {
+        tempGame.dice = []
+      } else if (isBlackTurn() && tempGame.blackHits.length > 0) {
         await delay(1500);
         toast.error("You can't play");
-        setDice([]);
-        setTurn((prev) => prev * -1);
+        tempGame.dice = []
       }
+      tempGame.turn = tempGame.turn * -1
     }
+
+    setGame(tempGame)
 
     // free the selected bars
     let p = { ...player };
@@ -381,9 +382,9 @@ function App() {
       }
       if (diceNum < 0) {
         diceNum = to - (11 - from);
-      } else if (diceNum > 6) {
-        // the player used both dices at the same time
-        diceNum = -1;
+      } 
+      if (diceNum > 6) {
+        diceNum = from - (11 - to);
       }
     } else if (
       (from <= 11 && game.turn == -1) ||
@@ -392,29 +393,22 @@ function App() {
       diceNum = to - from;
     }
 
-
-    if (diceNum === -1) {
-      tempGame.dice = []
-    } else {
-      const din = tempGame.dice.indexOf(diceNum);
-      if (din > -1) {
-        tempGame.dice.splice(din, 1);
-      } else {
-          tempGame.dice = [] 
-      }
+    const din = tempGame.dice.indexOf(diceNum);
+    if (din > -1) {
+      tempGame.dice.splice(din, 1);
     }
-
+    
     if (tempGame.dice.length == 0) {
       tempGame.turn = tempGame.turn * -1;
     }
-    setGame(tempGame);
+    console.log(tempGame)
   }
 
-  function pieceOut() {
+  async function pieceOut() {
     const from = player.selectedBars[0];
     let tempGame = { ...game };
     let tempPlayer = { ...player };
-    game.board[from].pop();
+    tempGame.board[from].pop();
     if (isWhiteTurn()) {
       tempGame.whiteOut = tempGame.whiteOut + 1;
     } else {
@@ -451,6 +445,8 @@ function App() {
     }
     tempPlayer.isOut = false;
     setPlayer(tempPlayer);
+
+
     if (tempGame.blackOut === 15) {
       checkForWinner("black");
     } else if (tempGame.whiteOut === 15) {
@@ -530,7 +526,7 @@ function App() {
       <div style={{ padding: "0.5rem" }}>
         <Dice dice={game.dice[0]} />
         <Dice dice={game.dice[1]} />
-        {game.dice.length > 2 ? doubleShow() : console.log(game.dice.length)}
+        {game.dice.length > 2 ? doubleShow() : ""}
       </div>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
       {player.isOut ? <button onClick={pieceOut}>Out</button> : ""}
