@@ -14,7 +14,7 @@ function App() {
     turn: 1,
     blackHits: [],
     whiteHits: [],
-    blackOut: 0,
+    blackOut: 12,
     whiteOut: 0,
   });
 
@@ -47,8 +47,10 @@ function App() {
     if (game.dice.length > 0) return toast.error("You can't roll the dice!");
     let tempGame = { ...game };
 
-    var first = Math.floor(Math.random() * 6) + 1;
-    var second = Math.floor(Math.random() * 6) + 1;
+    let first = Math.floor(Math.random() * 6) + 1;
+    let second = Math.floor(Math.random() * 6) + 1;
+    first = 3 
+    second = 3 
 
     let dices = [first, second];
     if (first == second) {
@@ -231,7 +233,6 @@ function App() {
     const available = [];
     let color = getColor();
     let temp = { ...player };
-    console.log(destinations);
 
     destinations.forEach((dest) => {
       if (!isNaN(dest) && dest != -1) {
@@ -249,6 +250,14 @@ function App() {
       }
     });
     temp.moves = available;
+    if (temp.moves.length === 0) {
+      let tempGame = {...game}
+      temp.selectedBars = []
+      tempGame.turn = tempGame.turn * -1 
+      tempGame.dice = []
+      setGame(tempGame)
+      toast.error("You can't Play!")
+    }
     setPlayer(temp);
   }
 
@@ -294,6 +303,7 @@ function App() {
     const moves = player.moves;
     let color = getColor();
 
+
     // check if from and to are the same, check if the destination is available for the player
     if (from == to && !isEntering) {
       toast("Canceled");
@@ -333,7 +343,14 @@ function App() {
       setPlayer(p);
 
       // update dice
-      updateDice(from, to, isEntering);
+      if (game.dice.length > 2) {
+        let tempGame = {...game}
+        tempGame.dice.pop()
+        setGame(tempGame)
+      } else {
+        updateDice(from, to, isEntering);
+      }
+
     }
 
     if (player.moves.length === 0) {
@@ -367,7 +384,8 @@ function App() {
       if (diceNum < 0) {
         diceNum = to - (11 - from);
       } else if (diceNum > 6) {
-        diceNum = from - (11 - to);
+        // the player used both dices at the same time
+        diceNum = -1;
       }
     } else if (
       (from <= 11 && game.turn == -1) ||
@@ -376,10 +394,15 @@ function App() {
       diceNum = to - from;
     }
 
-    const din = tempGame.dice.indexOf(diceNum);
-    if (din > -1) {
-      tempGame.dice.splice(din, 1);
+    if (diceNum === -1) {
+      tempGame.dice = []
+    } else {
+      const din = tempGame.dice.indexOf(diceNum);
+      if (din > -1) {
+        tempGame.dice.splice(din, 1);
+      }
     }
+
     if (tempGame.dice.length == 0) {
       tempGame.turn = tempGame.turn * -1;
     }
@@ -415,20 +438,16 @@ function App() {
         setGame(tempGame);
       }
       tempPlayer.selectedBars = [];
-      // setPlayer(tempPlayer);
     } else {
-      let temp = { ...player };
-      temp.moves.pop();
-      temp.selectedBars = [];
+      tempPlayer.moves.pop();
+      tempPlayer.selectedBars = [];
       tempGame.dice.pop();
-      // setPlayer(temp);
       setGame(tempGame);
     }
     if (tempGame.dice.length === 0) {
       tempGame.turn = tempGame.turn * -1;
       setGame(tempGame.turn);
     }
-    console.log(tempGame);
     tempPlayer.isOut = false;
     setPlayer(tempPlayer);
     if (tempGame.blackOut === 15) {
@@ -476,6 +495,22 @@ function App() {
     }
   }
 
+  function doubleShow() {
+    if (game.dice.length === 4) {
+      return (
+        <>
+        <Dice dice={game.dice[2]} />
+        <Dice dice={game.dice[3]} />
+        </>
+      )
+    } else if (game.dice.length === 3) {
+      return (
+        <Dice dice={game.dice[2]} />
+
+      )
+    }
+  }
+
   return (
     <>
       <Board>
@@ -494,6 +529,7 @@ function App() {
       <div style={{ padding: "0.5rem" }}>
         <Dice dice={game.dice[0]} />
         <Dice dice={game.dice[1]} />
+        {game.dice.length > 2 ? doubleShow() : console.log(game.dice.length)}
       </div>
       <button onClick={rollDice}>🎲 Roll dice 🎲</button>
       {player.isOut ? <button onClick={pieceOut}>Out</button> : ""}
