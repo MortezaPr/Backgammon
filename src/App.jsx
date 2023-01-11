@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Board from "./components/Board";
 import Bar from "./components/Bar";
 import Dice from "./components/Dice";
@@ -14,7 +14,7 @@ function App() {
     turn: 1,
     blackHits: [],
     whiteHits: [],
-    blackOut: 14,
+    blackOut: 0,
     whiteOut: 0,
   });
 
@@ -23,10 +23,6 @@ function App() {
     moves: [],
     isOut: false,
   });
-
-  useEffect(() => {
-    console.log("sad");
-  }, [game.turn]);
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -140,49 +136,51 @@ function App() {
     if ((from <= 11 && isWhiteTurn()) || (from > 11 && isBlackTurn())) {
       if (game.dice[0] === game.dice[1]) {
         let des = from - game.dice[0];
-        game.dice.forEach((d) => {
-          temp.push(des);
-        });
+        temp = [des, des, des, des];
         destinations = checkDestinations(temp, from);
       } else {
         let des1 = from - game.dice[0];
         let des2 = from - game.dice[1];
         temp = [des1, des2];
+        // if (turn === -1) {
+        //   if (des1 <= 11) {
+        //     temp.push(des1);
+        //   }
+        //   if (des2 <= 11) {
+        //     temp.push(des2);
+        //   }
+        // }
         destinations = checkDestinations(temp, from);
       }
       return destinations;
-    } else if (
-      (from <= 11 && game.turn == -1) ||
-      (from > 11 && game.turn == 1)
-    ) {
-      let movesState = [];
+    } else if ((from <= 11 && isBlackTurn()) || (from > 11 && isWhiteTurn())) {
       // doubles
       if (game.dice[0] === game.dice[1]) {
         let des = from + game.dice[0];
-        movesState = [des, des, des, des];
+        temp = [des, des, des, des];
+        destinations = checkDestinations(temp, from);
       } else {
-        const d1 = from + game.dice[0];
-        const d2 = from + game.dice[1];
-        const d3 = from + (game.dice[0] + game.dice[1]);
-        movesState = [d1, d2, d3];
+        let d1 = from + game.dice[0];
+        let d2 = from + game.dice[1];
+        temp = [d1, d2];
+        destinations = checkDestinations(temp, from);
       }
-      destinations = movesState;
 
+      // check if player can get their pieces out
       if (isWhiteTurn() && game.whiteHits.length == 0) {
         const count = countPieceNumbers();
         if (count == 15 - game.whiteOut) {
-          for (let i = 0; i < movesState.length; i++) {
-            if (movesState[i] >= 24) {
+          for (let i = 0; i < destinations.length; i++) {
+            if (destinations[i] >= 24) {
               destinations[i] = -1;
             }
           }
         }
       } else if (isBlackTurn() && game.blackHits.length == 0) {
         const count = countPieceNumbers();
-        console.log(count);
         if (count == 15 - game.blackOut) {
-          for (let i = 0; i < movesState.length; i++) {
-            if (movesState[i] >= 12) {
+          for (let i = 0; i < destinations.length; i++) {
+            if (destinations[i] >= 12) {
               destinations[i] = -1;
             }
           }
@@ -208,7 +206,7 @@ function App() {
   }
 
   function checkDestinations(destinations, from) {
-    if (from <= 11 && game.turn == 1) {
+    if (from <= 11 && isWhiteTurn()) {
       let res = [];
       destinations.forEach((dest) => {
         if (dest < 0) {
@@ -217,11 +215,29 @@ function App() {
         res.push(dest);
       });
       return res;
-    } else if (from > 11 && game.turn == -1) {
+    } else if (from > 11 && isBlackTurn()) {
       let res = [];
       destinations.forEach((dest) => {
         if (dest < 12) {
           dest = 11 - dest;
+        }
+        res.push(dest);
+      });
+      return res;
+    } else if (from <= 11 && isBlackTurn()) {
+      let res = [];
+      destinations.forEach((dest) => {
+        if (dest > 11) {
+          dest = NaN;
+        }
+        res.push(dest);
+      });
+      return res;
+    } else if (from > 11 && isWhiteTurn()) {
+      let res = [];
+      destinations.forEach((dest) => {
+        if (dest > 23) {
+          dest = NaN;
         }
         res.push(dest);
       });
@@ -234,7 +250,6 @@ function App() {
     const available = [];
     let color = getColor();
     let temp = { ...player };
-    console.log(destinations);
 
     destinations.forEach((dest) => {
       if (!isNaN(dest) && dest != -1 && dest <= 23) {
@@ -252,14 +267,14 @@ function App() {
       }
     });
     temp.moves = available;
-    if (temp.moves.length === 0) {
-      let tempGame = { ...game };
-      temp.selectedBars = [];
-      tempGame.turn = tempGame.turn * -1;
-      tempGame.dice = [];
-      setGame(tempGame);
-      toast.error("You can't Play!");
-    }
+    // if (temp.moves.length === 0) {
+    //   let tempGame = { ...game };
+    //   temp.selectedBars = [];
+    //   tempGame.turn = tempGame.turn * -1;
+    //   tempGame.dice = [];
+    //   setGame(tempGame);
+    //   toast.error("You can't Play!");
+    // }
     setPlayer(temp);
   }
 
@@ -267,7 +282,7 @@ function App() {
     if (winner === "black") {
       toast("⚫ Black Wins! ⚫");
     } else {
-      toast("🔘 White Wins! 🔘");
+      toast("⚪ White Wins! ⚪");
     }
     await delay(3000);
     // return to game's initial state
